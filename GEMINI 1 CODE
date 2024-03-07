@@ -1,0 +1,58 @@
+# Importation des modules nécessaires
+from ev3dev2.motor import LargeMotor, MediumMotor
+from ev3dev2.sensor import UltrasonicSensor
+from time import sleep
+
+# Définition des constantes
+DISTANCE_MUR = 2.0  # Distance du mur en mètres
+RAYON_CERCLE = 0.2  # Rayon du cercle en mètres
+AMPLITUDE_SINUS = 0.5  # Amplitude du sinus en mètres
+DUREE_SINUS = 5.0  # Durée du mouvement sinusoïdal en secondes
+PERIODE_SINUS = DUREE_SINUS / 2  # Période du mouvement sinusoïdal en secondes
+
+# Déclaration des moteurs et capteurs
+moteur_gauche = LargeMotor(OUTPUT_A)
+moteur_droit = LargeMotor(OUTPUT_B)
+capteur_distance = UltrasonicSensor(INPUT_1)
+
+# Fonction pour avancer en ligne droite
+def avancer(distance):
+    moteur_gauche.run_to_rel_pos(distance * 360 / (2 * PI * RAYON_ROUE), speed=500)
+    moteur_droit.run_to_rel_pos(distance * 360 / (2 * PI * RAYON_ROUE), speed=500)
+
+# Fonction pour tourner à droite
+def tourner_droite(angle):
+    moteur_gauche.run_to_rel_pos(-angle * 360 / (2 * PI * RAYON_ROUE), speed=500)
+    moteur_droit.run_to_rel_pos(angle * 360 / (2 * PI * RAYON_ROUE), speed=500)
+
+# Fonction pour dessiner un cercle
+def dessiner_cercle(rayon):
+    moteur_gauche.run_forever(speed=500)
+    moteur_droit.run_forever(speed=-500)
+    while capteur_distance.value() > rayon:
+        sleep(0.01)
+
+# Fonction pour faire un mouvement sinusoïdal
+def mouvement_sinusoïdal(amplitude, periode):
+    for i in range(2 * periode):
+        angle = i * 2 * PI / periode
+        distance = amplitude * sin(angle)
+        avancer(distance)
+
+# Programme principal
+avancer(DISTANCE_MUR - RAYON_CERCLE)
+dessiner_cercle(RAYON_CERCLE)
+avancer(RAYON_CERCLE)
+
+# Attente de 5 secondes
+sleep(5)
+
+# Reculer
+moteur_gauche.run_to_rel_pos(-DISTANCE_MUR / 2, speed=500)
+moteur_droit.run_to_rel_pos(-DISTANCE_MUR / 2, speed=500)
+
+# Tourner à droite
+tourner_droite(90)
+
+# Mouvement sinusoïdal
+mouvement_sinusoïdal(AMPLITUDE_SINUS, PERIODE_SINUS)
